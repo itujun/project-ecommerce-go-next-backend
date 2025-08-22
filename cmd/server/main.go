@@ -7,7 +7,10 @@ import (
 
 	"github.com/itujun/project-ecommerce-go-next/internal/config"
 	"github.com/itujun/project-ecommerce-go-next/internal/database"
+	"github.com/itujun/project-ecommerce-go-next/internal/handler"
+	"github.com/itujun/project-ecommerce-go-next/internal/repository/gorm"
 	"github.com/itujun/project-ecommerce-go-next/internal/routes"
+	"github.com/itujun/project-ecommerce-go-next/internal/service"
 	"go.uber.org/zap"
 )
 
@@ -35,8 +38,14 @@ func main() {
 	}
 	_ = db // variable db belum digunakan pada langkah ini; nanti akan diteruskan ke repository
 
-	// Inisialisasi router
-	router := routes.NewRouter()
+	// Inisialisasi repository dan service
+	userRepo	:= gorm.NewUserRepository(db)
+	roleRepo	:= gorm.NewRoleRepository(db)
+	userService := service.NewUserService(userRepo, roleRepo, cfg.JWTSecret)
+	authHandler := handler.NewAuthHandler(userService)
+
+	// Inisialisasi router dengan handler auth
+	router := routes.NewRouter(authHandler)
 
 	// Jalankan server HTTP
 	logger.Info("✅server dijalankan", zap.String("port", cfg.AppPort))

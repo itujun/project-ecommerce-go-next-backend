@@ -11,7 +11,12 @@ import (
 
 // NewRouter menginisialisasi router Chi dan mendaftarkan rute dasar.
 // NewRouter menerima authHandler, productHandler, JWTMiddleware, dan enforcer Casbin.
-func NewRouter(authHandler *handler.AuthHandler, productHandler *handler.ProductHandler, jwtMiddleware *middleware.JWTMiddleware, enforcer *casbin.Enforcer) *chi.Mux {
+func NewRouter(
+    authHandler *handler.AuthHandler, 
+    productHandler *handler.ProductHandler, 
+    orderHandler *handler.OrderHandler, 
+    jwtMiddleware *middleware.JWTMiddleware, 
+    enforcer *casbin.Enforcer) *chi.Mux {
     r := chi.NewRouter()
 
     // Contoh rute: GET /health
@@ -46,5 +51,22 @@ func NewRouter(authHandler *handler.AuthHandler, productHandler *handler.Product
         })
         // Di sini, Authorize membutuhkan dua parameter: nama resource (product) dan action (create, update, delete). Peran (role) pengguna diambil dari token, kemudian dicek terhadap policy Casbin.
     })
+
+    // Order routes / Grup rute order
+    r.Route("/orders", func(r chi.Router)  {
+        // rute untuk create order: hanya pembeli (buyer) yang diizinkan
+        r.Group(func(r chi.Router)  {
+            r.Use(jwtMiddleware.Middleware)    
+            r.Use(middleware.Authorize(enforcer, "order", "create"))
+            r.Post("/", orderHandler.CreateOrder)
+        })
+        // rute untuk list orders: buyer melihat pesanan sendiri, admin & seller semua
+        r.Group(func(r chi.Router)  {
+            r.Use(jwtMiddleware.Middleware)
+            r.Use(middleware.Authorize(enforcer, "order", "read"))
+            r.Put("/", orderHandler.ListOrders)
+        })
+    })
+
     return r
 }

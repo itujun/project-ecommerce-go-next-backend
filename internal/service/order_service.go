@@ -116,6 +116,57 @@ func (s *OrderService) CreateOrder(ctx context.Context, buyerID uuid.UUID, req d
 	}, nil
 }
 
+// ListOrdersForBuyer mengembalikan semua pesanan untuk pembeli tertentu.
+func (s *OrderService) ListOrdersForBuyer(ctx context.Context, buyerID uuid.UUID) ([]dto.OrderResponse, error) {
+    orders, err := s.orderRepo.ListOrdersByBuyer(ctx, buyerID)
+    if err != nil {
+        return nil, err
+    }
+    return s.convertOrdersToResponses(ctx, orders)
+}
+
+// ListAllOrdersAdminSeller mengembalikan semua pesanan untuk admin atau seller.
+func (s *OrderService) ListAllOrdersAdminSeller(ctx context.Context) ([]dto.OrderResponse, error) {
+    orders, err := s.orderRepo.ListAllOrders(ctx)
+    if err != nil {
+        return nil, err
+    }
+    return s.convertOrdersToResponses(ctx, orders)
+}
+
+// Helper untuk mengonversi domain.Order menjadi dto.OrderResponse
+func (s *OrderService) convertOrdersToResponses(ctx context.Context, orders []domain.Order) ([]dto.OrderResponse, error) {
+    var responses []dto.OrderResponse
+    for _, order := range orders {
+        // Ambil item pesanan
+        items, err := s.orderItemRepo.GetItemsByOrderID(ctx, order.ID)
+        if err != nil {
+            return nil, err
+        }
+        var respItems []dto.OrderItemResponse
+        for _, item := range items {
+            // Dapatkan nama produk
+            prod, _ := s.productRepo.GetProductByID(ctx, item.ProductID)
+            respItems = append(respItems, dto.OrderItemResponse{
+                ID:        item.ID.String(),
+                ProductID: item.ProductID.String(),
+                Quantity:  item.Quantity,
+                Price:     item.Price,
+                Name:      prod.Name,
+            })
+        }
+        responses = append(responses, dto.OrderResponse{
+            ID:        order.ID.String(),
+            BuyerID:   order.BuyerID.String(),
+            OrderDate: order.OrderDate.Format(time.RFC3339),
+            Total:     order.Total,
+            Status:    order.Status,
+            Items:     respItems,
+        })
+    }
+    return responses, nil
+}
+
 // Keterangan penting:
 // - CreateOrder memvalidasi input, memeriksa role pembeli, menghitung total, mengurangi stok produk, lalu menyimpan order dan item ke database.
 // - ListOrdersForBuyer mengembalikan pesanan milik pembeli tertentu.

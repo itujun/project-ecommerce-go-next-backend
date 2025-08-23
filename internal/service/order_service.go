@@ -54,7 +54,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, buyerID uuid.UUID, req d
 		prodID, _ := uuid.Parse(it.ProductID)
 		prod, err := s.productRepo.GetProductByID(ctx, prodID)
 		if err != nil {
-			return nil, fmt.Errorf("produk dengan ID %s todal ditemukan", it.ProductID)
+			return nil, fmt.Errorf("produk dengan ID %s tidak ditemukan", it.ProductID)
 		}
 		if it.Quantity > prod.Stock {
 			return nil, fmt.Errorf("stok produk %s tidak mencukupi", prod.Name)

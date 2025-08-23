@@ -13,7 +13,7 @@ func Authorize(enforcer *casbin.Enforcer, obj string, act string) func(http.Hand
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Ambil role user dari context (di-set oleh JWT middleware)
-			roleVal := r.Context().Value("user_role")
+			roleVal := r.Context().Value("role")
 			role, ok := roleVal.(string)
 			if !ok || role == "" {
 				http.Error(w, "Forbidden: role tidak ditemukan", http.StatusForbidden)

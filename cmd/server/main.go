@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/itujun/project-ecommerce-go-next/internal/authorization"
 	"github.com/itujun/project-ecommerce-go-next/internal/config"
 	"github.com/itujun/project-ecommerce-go-next/internal/database"
 	"github.com/itujun/project-ecommerce-go-next/internal/handler"
+	"github.com/itujun/project-ecommerce-go-next/internal/middleware"
 	"github.com/itujun/project-ecommerce-go-next/internal/repository/gorm"
 	"github.com/itujun/project-ecommerce-go-next/internal/routes"
 	"github.com/itujun/project-ecommerce-go-next/internal/service"
@@ -44,8 +46,22 @@ func main() {
 	userService := service.NewUserService(userRepo, roleRepo, cfg.JWTSecret)
 	authHandler := handler.NewAuthHandler(userService)
 
-	// Inisialisasi router dengan handler auth
-	router := routes.NewRouter(authHandler)
+	// Inisialisasi enforcer Casbin
+    enforcer, err := authorization.NewEnforcer("config/rbac_model.conf", "config/rbac_policy.csv")
+    if err != nil {
+        logger.Fatal("gagal inisialisasi Casbin", zap.Error(err))
+    }
+	
+	// Inisialisasi JWT middleware
+    jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWTSecret)
+	
+	// Inisialisasi repository dan service
+    productRepo 	:= gorm.NewProductRepository(db)
+    productService 	:= service.NewProductService(productRepo, userRepo)
+    productHandler 	:= handler.NewProductHandler(productService)
+	
+	// Router dengan authHandler (dari langkah 3), productHandler, jwtMiddleware, enforcer
+    router := routes.NewRouter(authHandler, productHandler, jwtMiddleware, enforcer)
 
 	// Jalankan server HTTP
 	logger.Info("✅server dijalankan", zap.String("port", cfg.AppPort))

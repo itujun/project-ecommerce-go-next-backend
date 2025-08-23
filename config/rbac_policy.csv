@@ -1,4 +1,4 @@
-# format: p, role, resourcer, action
+# format: p, role, resource, action
 
 # Role admin memiliki akses penuh terhadap produk dan pesanan
 p, admin, product, create

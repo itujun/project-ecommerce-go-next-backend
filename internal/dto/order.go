@@ -29,3 +29,9 @@ type OrderResponse struct {
 	Status		string				`json:"status"`
 	Items		[]OrderItemResponse	`json:"items"`
 }
+
+// Penjelasan:
+// - OrderItemRequest berisi ProductID dan Quantity. Gunakan tag uuid4 untuk validasi UUID.
+// - CreateOrderRequest memuat array item pesanan; minimal harus ada satu item.
+// - OrderItemResponse menambahkan Name untuk menampilkan nama produk dan Price untuk harga saat pembelian.
+// - OrderResponse menampilkan keseluruhan pesanan.

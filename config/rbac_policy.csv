@@ -5,6 +5,7 @@ p, admin, product, create
 p, admin, product, update
 p, admin, product, delete
 p, admin, order, read
+p, admin, order, create
 p, admin, order, update
 p, admin, order, delete
 

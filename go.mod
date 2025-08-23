@@ -3,6 +3,7 @@ module github.com/itujun/project-ecommerce-go-next
 go 1.24.5
 
 require (
+	github.com/casbin/casbin/v2 v2.120.0
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
@@ -17,6 +18,8 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
+	github.com/casbin/govaluate v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

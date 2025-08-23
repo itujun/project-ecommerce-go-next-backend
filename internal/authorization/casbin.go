@@ -8,8 +8,8 @@ import (
 // NewEnforcer membuat model dan policy dari file.
 // Parameter modelPath dan policyPath adalah lokasi file .conf dan .csv.
 func NewEnforcer(modelPath, policyPath string) (*casbin.Enforcer, error) {
-	adapter := fileadapter.NewAdapter("config/rbac_policy.csv")
-	enforcer, err := casbin.NewEnforcer("config/rbac_model.conf", adapter) 
+	adapter := fileadapter.NewAdapter(policyPath)
+	enforcer, err := casbin.NewEnforcer(modelPath, adapter) 
 	if err != nil {
 		return nil, err
 	}

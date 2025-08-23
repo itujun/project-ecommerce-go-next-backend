@@ -2,7 +2,7 @@ package dto
 
 // OrderItemRequest merepresentasikan item yang diorder.
 type OrderItemRequest struct {
-	ProductID 	string	`json:"priduct_id" validate:"required"`		// ID produk dalam UUID
+	ProductID 	string	`json:"product_id" validate:"required"`		// ID produk dalam UUID
 	Quantity 	int 	`json:"quantity" validate:"required,gt=0"`
 }
 

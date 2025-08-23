@@ -57,11 +57,15 @@ func main() {
 	
 	// Inisialisasi repository dan service
     productRepo 	:= gorm.NewProductRepository(db)
+	orderRepo 		:= gorm.NewOrderRepository(db)
+    orderItemRepo 	:= gorm.NewOrderItemRepository(db)
     productService 	:= service.NewProductService(productRepo, userRepo)
+	orderService 	:= service.NewOrderService(orderRepo, orderItemRepo, productRepo, userRepo)
     productHandler 	:= handler.NewProductHandler(productService)
+	orderHandler 	:= handler.NewOrderHandler(orderService)
 	
 	// Router dengan authHandler (dari langkah 3), productHandler, jwtMiddleware, enforcer
-    router := routes.NewRouter(authHandler, productHandler, jwtMiddleware, enforcer)
+    router := routes.NewRouter(authHandler, productHandler, orderHandler, jwtMiddleware, enforcer)
 
 	// Jalankan server HTTP
 	logger.Info("✅server dijalankan", zap.String("port", cfg.AppPort))

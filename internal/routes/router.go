@@ -64,7 +64,7 @@ func NewRouter(
         r.Group(func(r chi.Router)  {
             r.Use(jwtMiddleware.Middleware)
             r.Use(middleware.Authorize(enforcer, "order", "read"))
-            r.Put("/", orderHandler.ListOrders)
+            r.Get("/", orderHandler.ListOrders)
         })
     })
 

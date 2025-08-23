@@ -1,0 +1,21 @@
+# format: p, role, resourcer, action
+
+# Role admin memiliki akses penuh terhadap produk dan pesanan
+p, admin, product, create
+p, admin, product, update
+p, admin, product, delete
+p, admin, order, read
+p, admin, order, update
+p, admin, order, delete
+
+# Role seller boleh membuat, memperbarui, dan menghapus produk
+p, seller, product, create
+p, seller, product, update
+p, seller, product, delete
+
+# Role seller dapat membaca pesanan (agar bisa memproses pesanan untuk produknya)
+p, seller, order, read
+
+# Role buyer hanya boleh membuat pesanan dan melihat pesanan mereka
+p, buyer, order, create
+p, buyer, order, read

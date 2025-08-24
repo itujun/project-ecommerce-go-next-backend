@@ -3,10 +3,13 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/itujun/project-ecommerce-go-next/internal/dto"
 	"github.com/itujun/project-ecommerce-go-next/internal/service"
+	"github.com/itujun/project-ecommerce-go-next/internal/utils"
 )
 
 // AuthHandler menagani request registrasi dan login.
@@ -28,6 +31,17 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	res, err := h.userService.RegisterUser(context.Background(), req)
 	if err != nil {
+		// cek apakah err adalah ValidatonErrors
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			// terjemahkan ke map
+			fieldErrors := utils.ValidationErrorsToMap(ve)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(w).Encode(fieldErrors)
+			return
+		}
+		// error lain
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

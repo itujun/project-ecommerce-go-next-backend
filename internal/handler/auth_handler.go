@@ -53,15 +53,35 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // Login menangani POST /auth/login.
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
     var req dto.LoginRequest
+	// Dekode body JSON ke struct LoginRequest
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
         http.Error(w, "invalid request body", http.StatusBadRequest)
         return
     }
+
+	// Panggil service untuk login
     res, err := h.userService.LoginUser(context.Background(), req)
     if err != nil {
-        http.Error(w, err.Error(), http.StatusUnauthorized)
+        // Jika error adalah validasi field
+        var ve validator.ValidationErrors
+        if errors.As(err, &ve) {
+            // Terjemahkan validation errors ke map[field]pesan
+            fieldErrors := utils.ValidationErrorsToMap(ve)
+            w.Header().Set("Content-Type", "application/json")
+            w.WriteHeader(http.StatusBadRequest)
+            _ = json.NewEncoder(w).Encode(fieldErrors)
+            return
+        }
+        // Jika error bukan validasi (contoh: email atau password salah)
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusUnauthorized)
+        _ = json.NewEncoder(w).Encode(map[string]string{
+            "general": err.Error(), // misalnya: "email atau password salah"
+        })
         return
     }
+
+    // Login sukses: kembalikan data user dan token
     w.Header().Set("Content-Type", "application/json")
     _ = json.NewEncoder(w).Encode(res)
 }

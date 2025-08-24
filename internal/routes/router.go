@@ -5,6 +5,7 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/itujun/project-ecommerce-go-next/internal/handler"
 	"github.com/itujun/project-ecommerce-go-next/internal/middleware"
 )
@@ -19,6 +20,15 @@ func NewRouter(
     enforcer *casbin.Enforcer) *chi.Mux {
     r := chi.NewRouter()
 
+    // Konfigurasi CORS
+    corsHandler := cors.New(cors.Options{
+        AllowedOrigins:   []string{"http://localhost:3000"}, // domain front‑end
+        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+        AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+        AllowCredentials: true,
+    })
+    r.Use(corsHandler.Handler)
+    
     // Contoh rute: GET /health
     r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)

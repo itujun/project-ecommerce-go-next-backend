@@ -1,0 +1,52 @@
+root = "."
+testdata_dir = "testdata"
+tmp_dir = "tmp"
+
+[build]
+  args_bin = []                                      # argumen tambahan ke binary (jika perlu)
+  bin = "tmp\\main.exe"                              # lokasi binary di Windows
+  cmd = "go build -o ./tmp/main.exe ./cmd/server"    # build binary ke tmp/
+  delay = 1000                                              # debounce 1000ms agar build tidak terlalu sering
+  exclude_dir = ["tmp", "vendor", "node_modules", ".git"]   # abaikan folder ini
+  exclude_file = []
+  exclude_regex = ["_test\\.go"]                            # file test tidak memicu reload
+  exclude_unchanged = false
+  follow_symlink = false
+  full_bin = ""                                      # kosongkan (pakai 'bin' saja)
+  include_dir = []
+  include_ext = ["go", "mod", "sum", "env", "yaml", "yml"]  # pantau file penting (termasuk .env)
+  include_file = []
+  kill_delay = "0s"
+  log = "build-errors.log"
+  poll = false                                              # pakai fsnotify (set true jika bermasalah di Windows)
+  poll_interval = 0
+  post_cmd = []
+  pre_cmd = []
+  rerun = false
+  rerun_delay = 500
+  send_interrupt = false
+  stop_on_error = true                                      # kalau build gagal, jangan jalankan binary lama
+
+[color]
+  app = ""
+  main    = "magenta"   # warna log utama Air
+  watcher = "cyan"      # warna log watcher
+  build   = "yellow"    # warna log proses build
+  runner  = "green"     # warna log proses runner (aplikasi)
+
+[log]
+  main_only = false
+  silent = false
+  time = true                                               # tampilkan timestamp di log (opsional)
+
+[misc]
+  clean_on_exit = false
+
+[proxy]
+  app_port = 0
+  enabled = false
+  proxy_port = 0
+
+[screen]
+  clear_on_rebuild = false
+  keep_scroll = true

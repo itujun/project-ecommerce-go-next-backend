@@ -1,1 +1,5 @@
 .env
+
+# Air & build artifacts
+tmp/
+.air.toml.local

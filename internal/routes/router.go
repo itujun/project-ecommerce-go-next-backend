@@ -25,7 +25,7 @@ func NewRouter(
         AllowedOrigins:   []string{"http://localhost:3000"}, // domain front‑end
         AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
         AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
-        AllowCredentials: true,
+        AllowCredentials: true, // supaya cookie ikut terkirim
     })
     r.Use(corsHandler.Handler)
     
@@ -38,6 +38,9 @@ func NewRouter(
     r.Route("/auth", func(r chi.Router) {
         r.Post("/register", authHandler.Register)
         r.Post("/login", authHandler.Login)
+        r.Post("/refresh", authHandler.Refresh)
+        r.Post("/logout", authHandler.Logout)
+        r.Get("/me", authHandler.Me)
     })
     // Product routes / Grup rute product
     r.Route("/products", func(r chi.Router) {

@@ -9,7 +9,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/itujun/project-ecommerce-go-next/internal/config"
-	"github.com/itujun/project-ecommerce-go-next/internal/domain"
 )
 
 // CustomClaims menyimpan data user minimal + jti
@@ -29,16 +28,18 @@ func NewJWTService(cfg *config.Config) *JWTService {
 }
 
 // GenerateAccessToken membuat AT (durasi pendek) untuk akses API
-func (s *JWTService) GenerateAccessToken(u *domain.User) (string, time.Time, error) {
+// semula: func (s *JWTService) GenerateAccessToken(u *domain.User) (string, time.Time, error)
+// ganti jadi menerima primitive:
+func (s *JWTService) GenerateAccessToken(userID uuid.UUID, roleID uuid.UUID) (string, time.Time, error) {
 	now := time.Now()
 	exp := now.Add(s.cfg.AccessTTL)
 
 	claims := CustomClaims{
-		UserID: u.ID,
-		RoleID: u.RoleID,
+		 UserID: userID,
+        RoleID: roleID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "ecommerce-go",
-			Subject:   u.ID.String(),
+			Subject:   userID.String(),
 			Audience:  []string{"ecommerce-client"},
 			ExpiresAt: jwt.NewNumericDate(exp),
 			IssuedAt:  jwt.NewNumericDate(now),
@@ -53,13 +54,15 @@ func (s *JWTService) GenerateAccessToken(u *domain.User) (string, time.Time, err
 }
 
 // GenerateRefreshToken membuat RT (durasi lebih panjang) untuk refresh AT
-func (s *JWTService) GenerateRefreshToken(u *domain.User) (string, time.Time, error) {
+// semula: func (s *JWTService) GenerateRefreshToken(u *domain.User) (string, time.Time, error)
+// ganti jadi menerima hanya userID (role tidak perlu untuk RT)
+func (s *JWTService) GenerateRefreshToken(userID uuid.UUID) (string, time.Time, error) {
 	now := time.Now()
 	exp := now.Add(s.cfg.RefreshTTL)
 
 	claims := jwt.RegisteredClaims{
 		Issuer:    "ecommerce-go",
-		Subject:   u.ID.String(),
+		Subject:   userID.String(),
 		Audience:  []string{"ecommerce-client"},
 		ExpiresAt: jwt.NewNumericDate(exp),
 		IssuedAt:  jwt.NewNumericDate(now),

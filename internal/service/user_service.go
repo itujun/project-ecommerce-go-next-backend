@@ -25,20 +25,6 @@ type UserService struct {
 	rtRepo repository.RefreshTokenRepository
 }
 
-func (s *UserService) SaveRefreshToken(ctx context.Context, userID uuid.UUID, refreshToken string, issuedAt, expiresAt time.Time, jti string) error {
-	// Simpan hash dari RT
-	hash := s.jwtSvc.HashRefreshToken(refreshToken)
-	rt := &domain.RefreshToken{
-		ID:        uuid.MustParse(jti),
-		UserID:    userID,
-		TokenHash: hash,
-		IssuedAt:  issuedAt,
-		ExpiresAt: expiresAt,
-		Revoked:   false,
-	}
-	return s.rtRepo.Save(ctx, rt)
-}
-
 // NewUserService membuat instance UserService baru.
 func NewUserService(userRepo repository.UserRepository, roleRepo repository.RoleRepository, jwtSecret string) *UserService {
     return &UserService{
@@ -122,6 +108,20 @@ func (s *UserService) LoginUser(ctx context.Context, req dto.LoginRequest) (*dto
 		},
 		Token: signed,
 	},nil
+}
+
+func (s *UserService) SaveRefreshToken(ctx context.Context, userID uuid.UUID, refreshToken string, issuedAt, expiresAt time.Time, jti string) error {
+	// Simpan hash dari RT
+	hash := s.jwtSvc.HashRefreshToken(refreshToken)
+	rt := &domain.RefreshToken{
+		ID:        uuid.MustParse(jti),
+		UserID:    userID,
+		TokenHash: hash,
+		IssuedAt:  issuedAt,
+		ExpiresAt: expiresAt,
+		Revoked:   false,
+	}
+	return s.rtRepo.Save(ctx, rt)
 }
 
 // VerifyRefreshTokenDB: validasi RT berdasar klaim JWT + cek DB (revoked/expired)

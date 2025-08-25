@@ -21,18 +21,43 @@ type UserService struct {
 	roleRepo 	repository.RoleRepository
 	validator 	*validator.Validate
 	jwtSecret	string
-	jwtSvc *JWTService
-	rtRepo repository.RefreshTokenRepository
+	
+	// dependency untuk JWT & Refresh Token
+    jwtSvc *JWTService
+    rtRepo repository.RefreshTokenRepository
 }
 
+// ====== Perbarui constructor agar menerima semua dependency ======
 // NewUserService membuat instance UserService baru.
-func NewUserService(userRepo repository.UserRepository, roleRepo repository.RoleRepository, jwtSecret string) *UserService {
+func NewUserService(
+	userRepo repository.UserRepository,
+    roleRepo repository.RoleRepository,
+    rtRepo repository.RefreshTokenRepository,
+    jwtSvc *JWTService,
+    jwtSecret string,
+) *UserService {
     return &UserService{
         userRepo:  userRepo,
         roleRepo:  roleRepo,
         validator: validator.New(),
         jwtSecret: jwtSecret,
+        jwtSvc:    jwtSvc,
+        rtRepo:    rtRepo,
     }
+}
+
+// Setter untuk melengkapi dependency JWT & RT jika pakai constructor legacy.
+// Panggil sekali saat inisialisasi di main.go.
+func (s *UserService) WithTokenDeps(rtRepo repository.RefreshTokenRepository, jwtSvc *JWTService) *UserService {
+    s.rtRepo = rtRepo
+    s.jwtSvc = jwtSvc
+    return s
+}
+
+// GetUserByID mengambil user domain dari repository berdasarkan UUID.
+func (s *UserService) GetUserByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+    // Delegasikan langsung ke repository
+    return s.userRepo.GetUserByID(ctx, id)
 }
 
 // RegisterUser membuat pengguna baru setelah validasi dan hasing password

@@ -97,16 +97,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	uid, err := uuid.Parse(res.User.ID) // asumsi dto.UserResponse.ID berupa string UUID
 	if err != nil { http.Error(w, "invalid user id", http.StatusInternalServerError); return }
 
-	var rid uuid.UUID
-	if res.User.Role != "" {
-		rid, err = uuid.Parse(res.User.Role)
-		if err != nil { http.Error(w, "invalid role id", http.StatusInternalServerError); return }
-	} else {
-		// Jika DTO tidak memuat RoleID, ambil dari DB
-		uDomain, err := h.userService.GetUserByID(r.Context(), uid)
-		if err != nil { http.Error(w, "user not found", http.StatusInternalServerError); return }
-		rid = uDomain.RoleID
-	}
+	uDomain, err := h.userService.GetUserByID(r.Context(), uid)
+	if err != nil { http.Error(w, "user not found", http.StatusInternalServerError); return }
+	rid := uDomain.RoleID
+
 
     // --- Generate Access Token & Refresh Token ---
 	atStr, atExp, err := h.jwtService.GenerateAccessToken(uid, rid)

@@ -43,8 +43,10 @@ func main() {
 	// Inisialisasi repository dan service
 	userRepo	:= gorm.NewUserRepository(db)
 	roleRepo	:= gorm.NewRoleRepository(db)
-	userService := service.NewUserService(userRepo, roleRepo, cfg.JWTSecret)
-	authHandler := handler.NewAuthHandler(userService)
+	rtRepo   	:= gorm.NewRefreshTokenRepository(db)
+	jwtService 	:= service.NewJWTService(cfg)
+	userService := service.NewUserService(userRepo, roleRepo, rtRepo, jwtService, cfg.JWTAccessSecret)
+	authHandler := handler.NewAuthHandler(userService, jwtService)
 
 	// Inisialisasi enforcer Casbin
     enforcer, err := authorization.NewEnforcer("config/rbac_model.conf", "config/rbac_policy.csv")

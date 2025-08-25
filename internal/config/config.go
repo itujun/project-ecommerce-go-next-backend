@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -16,6 +17,10 @@ type Config struct {
 	DBName		string // nama db 
 	DBCharset	string // character set db
 	JWTSecret   string // Secret untuk menandatangani token JWT
+	JWTAccessSecret   	string 			// secret HMAC untuk AT
+	JWTRefreshSecret	string 			// secret HMAC untuk RT
+	AccessTTL			time.Duration 	// durasi AT, mis. 15m
+	RefreshTTL			time.Duration 	// durasi RT, mis. 168h (7d)
 }
 
 // LoadConfig membaca konfigurasi file .env dan environment variables.
@@ -24,6 +29,10 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("APP_PORT", ":8080")	// nilai default jika tidak diset
 	viper.SetDefault("DB_CHARSET", "utf8mb4")
 	viper.SetDefault("JWT_SECRET", "supersecret")
+	viper.SetDefault("JWT_ACCESS_SECRET", "super-at-secret")
+	viper.SetDefault("JWT_REFRESH_SECRET", "super-rt-secret")
+	viper.SetDefault("JWT_ACCESS_TTL", "30m")
+	viper.SetDefault("JWT_REFRESH_TTL", "72h") // 7 hari
 
 	// Membaca file .env (jika ada)
 	if err := viper.ReadInConfig(); err != nil {
@@ -32,6 +41,11 @@ func LoadConfig() (*Config, error) {
 	}
 
 	viper.AutomaticEnv() // override dengan environtment variable
+
+	accessTTL, err := time.ParseDuration(viper.GetString("JWT_ACCESS_TTL"))
+	if err != nil { return nil, err}
+	refreshTTL, err := time.ParseDuration(viper.GetString("JWT_REFRESH_TTL"))
+	if err != nil { return nil, err}
 
 	cfg := &Config{
 		AppPort: 	viper.GetString("APP_PORT"),
@@ -42,6 +56,10 @@ func LoadConfig() (*Config, error) {
         DBName:     viper.GetString("DB_NAME"),
         DBCharset:  viper.GetString("DB_CHARSET"),
         JWTSecret:  viper.GetString("JWT_SECRET"),
+		JWTAccessSecret: viper.GetString("JWT_ACCESS_SECRET"),
+		JWTRefreshSecret: viper.GetString("JWT_REFRESH_SECRET"),
+		AccessTTL: accessTTL,
+		RefreshTTL: refreshTTL,
 	}
 	return cfg,nil
 }

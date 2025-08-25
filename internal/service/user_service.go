@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -20,6 +21,22 @@ type UserService struct {
 	roleRepo 	repository.RoleRepository
 	validator 	*validator.Validate
 	jwtSecret	string
+	jwtSvc *JWTService
+	rtRepo repository.RefreshTokenRepository
+}
+
+func (s *UserService) SaveRefreshToken(ctx context.Context, userID uuid.UUID, refreshToken string, issuedAt, expiresAt time.Time, jti string) error {
+	// Simpan hash dari RT
+	hash := s.jwtSvc.HashRefreshToken(refreshToken)
+	rt := &domain.RefreshToken{
+		ID:        uuid.MustParse(jti),
+		UserID:    userID,
+		TokenHash: hash,
+		IssuedAt:  issuedAt,
+		ExpiresAt: expiresAt,
+		Revoked:   false,
+	}
+	return s.rtRepo.Save(ctx, rt)
 }
 
 // NewUserService membuat instance UserService baru.
@@ -105,4 +122,58 @@ func (s *UserService) LoginUser(ctx context.Context, req dto.LoginRequest) (*dto
 		},
 		Token: signed,
 	},nil
+}
+
+// VerifyRefreshTokenDB: validasi RT berdasar klaim JWT + cek DB (revoked/expired)
+func (s *UserService) VerifyRefreshTokenDB(ctx context.Context, tokenStr string) (*domain.User, *uuid.UUID, error) {
+	claims, err := s.jwtSvc.VerifyRefreshToken(tokenStr)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Ambil jti & userID dari klaim
+	jti := claims.ID
+	if jti == "" {
+		return nil, nil, errors.New("missing jti")
+	}
+	userID, err := uuid.Parse(claims.Subject)
+	if err != nil {
+		return nil, nil, errors.New("invalid subject")
+	}
+
+	// Cek record RT di DB
+	rtModel, err := s.rtRepo.FindByID(ctx, uuid.MustParse(jti))
+	if err != nil {
+		return nil, nil, errors.New("refresh token not found")
+	}
+	if rtModel.Revoked || time.Now().After(rtModel.ExpiresAt) {
+		return nil, nil, errors.New("refresh token revoked or expired")
+	}
+
+	// Validasi hash (opsional—kalau ingin bind token ke DB)
+	// hash := s.jwtSvc.HashRefreshToken(tokenStr)
+	// if hash != rtModel.TokenHash { return nil, nil, errors.New("token mismatch") }
+
+	// Ambil user (pastikan repository user Anda tersedia)
+	user, err := s.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, nil, err
+	}
+	rtID := uuid.MustParse(jti)
+	return user, &rtID, nil
+}
+
+// RotateRefreshToken: revoke RT lama & simpan RT baru
+func (s *UserService) RotateRefreshToken(ctx context.Context, user *domain.User, oldRTID uuid.UUID, newRT string, issuedAt, expiresAt time.Time, newJTI string) error {
+	// Revoke RT lama
+	if err := s.rtRepo.Revoke(ctx, oldRTID); err != nil {
+		return err
+	}
+	// Simpan RT baru
+	return s.SaveRefreshToken(ctx, user.ID, newRT, issuedAt, expiresAt, newJTI)
+}
+
+// RevokeAllUserTokens: logout dari semua sesi
+func (s *UserService) RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error {
+	return s.rtRepo.RevokeAllByUser(ctx, userID)
 }
